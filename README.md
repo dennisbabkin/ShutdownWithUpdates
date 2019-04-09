@@ -5,6 +5,12 @@
 
 Is available [here](https://dennisbabkin.com/utilities/#ShutdownWithUpdates).
 
+### Build Instructions
+
+The source code was built using Visual Studio 2008. Use `ShutdownWithUpdates.sln` file to open this project in VS 2008. Build it for `Win32` (or `x86`) platform.
+
+Note that this project was not designed, nor was tested to be opened in the version of the Visual Studio later than 2008. Although the resulting binary (executable) can run on a 64-bit operating system, its Visual Studio source project was not designed to be built for x86-64 (or 64-bit) platform.
+
 ### Description
 
 Utility that initiates installation of pre-downloaded updates on the Windows system & reboots,
@@ -63,7 +69,7 @@ Exit Codes:
 
 -------------
 
-Examples:
+#### Examples:
 1. Install updates and reboot local computer without a delay:
     (Fail if unsaved user data on computer.)
 
