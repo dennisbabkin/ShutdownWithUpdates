@@ -34,31 +34,31 @@ the OS will simply perform the power operation.
 Usage:
 > ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu] [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy]
 
--  **/s**    Install updates & shut down computer.
+-  `/s`    Install updates & shut down computer.
          (Updates must be already downloaded on computer being shut down.)
--  **/r**    Install updates & reboot computer.
+-  `/r`    Install updates & reboot computer.
          (Updates must be already downloaded on computer being rebooted.)
--  **/hs**   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
+-  `/hs`   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
          (Updates must be already downloaded on computer being shut down.)
--  **/g**    Install updates & reboot computer & restart registered applications.
+-  `/g`    Install updates & reboot computer & restart registered applications.
          (Updates must be already downloaded on computer being rebooted.)
--  **/abo**  Go to advanced boot options menu. (Windows 8,10)
+-  `/abo`  Go to advanced boot options menu. (Windows 8,10)
          (Pre-Windows 10: Updates will not be installed.)
--  **/a**    Abort previous shut-down/rebooting.
+-  `/a`    Abort previous shut-down/rebooting.
          (Can be used only during previous time-out period.)
--  **/?**    Show command line help.
--  **/f**    Use forced action.
+-  `/?`    Show command line help.
+-  `/f`    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
--  **/v**    Show user confirmation before proceeding.
+-  `/v`    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
--  **/nu**   Not to install updates.
+-  `/nu`   Not to install updates.
          (Windows 10: This option is not supported.)
--  **/m \\computer**    Specify target/remote computer.
--  **/t x**  Set time-out before performing action to x seconds.
+-  `/m \\computer`    Specify target/remote computer.
+-  `/t x`  Set time-out before performing action to x seconds.
          (Valid range is 0-315360000, or 10 yrs, with a default of 0.)
--  **/c "msg"**      Message to be displayed in the interactive shutdown dialog box.
+-  `/c "msg"`      Message to be displayed in the interactive shutdown dialog box.
                  (Maximum of 512 characters is allowed.)
--  **/d [p|u:]xx:yy**  Reason for shut-down or rebooting (used for logging):
+-  `/d [p|u:]xx:yy`  Reason for shut-down or rebooting (used for logging):
    -  `p` if action was planned.
    -  `u` if action was user-defined.
       (If neither `p` or `u` is used, assumes unplanned.)
@@ -68,9 +68,9 @@ Usage:
         For major and minor reason values check "[System Shutdown Reason Codes](https://docs.microsoft.com/en-us/windows/desktop/shutdown/system-shutdown-reason-codes)".
 
 Exit Codes:
-- **0**      if success.
-- **-1**     if general failure in the module.
-- **Other**  if error, will contain "[System Error Code](https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes)".
+- `0`      if success.
+- `-1`     if general failure in the module.
+- `Other`  if error, will contain "[System Error Code](https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes)".
 
 -------------
 
