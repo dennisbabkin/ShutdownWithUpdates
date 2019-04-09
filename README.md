@@ -9,7 +9,11 @@ Is available [here](https://dennisbabkin.com/utilities/#ShutdownWithUpdates).
 
 The source code was built using Visual Studio 2008. Use `ShutdownWithUpdates.sln` file to open this project in VS 2008. Build it for `Win32` (or `x86`) platform.
 
-Note that this project was not designed, nor was tested to be opened in the version of the Visual Studio later than 2008. Although the resulting binary (executable) can run on a 64-bit operating system, its Visual Studio source project was not designed to be built for x86-64 (or 64-bit) platform.
+Note that this project was not designed, nor was tested to be opened in the version of the Visual Studio later than 2008. Although the resulting binary (executable) can run on a 64-bit operating system, its Visual Studio source project was not designed to be built natively for x86-64 (or 64-bit) platform.
+
+---------------------
+
+![Alt text](https://dennisbabkin.com/php/imgs2/scrsht_shutdownwithupdates.png "ShutdownWithUpdates window")
 
 ### Description
 
@@ -23,6 +27,7 @@ the OS will simply perform the power operation.
 **Additional:** Major updates, such as Windows Feature Updates, may require user interaction in despite
             of the options specified by this tool. Such requirement is stipulated by Microsoft and
             cannot be overridden by this tool.
+            
 
 ### Basic Operation
 
