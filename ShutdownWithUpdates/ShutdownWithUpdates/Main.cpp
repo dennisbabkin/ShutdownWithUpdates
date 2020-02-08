@@ -1,7 +1,7 @@
 /*
  * ShutdownWithUpdates
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
- * Copyright (c) 2016-2019 www.dennisbabkin.com
+ * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
  *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
  *
@@ -54,7 +54,6 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 
 	//Check if this file has a "mark of the web" stream attached to it & remove it
 	CheckForXP_SP2_FileBlockAndRemoveIt();
-
 
 
 	if(argc > 1)
@@ -242,6 +241,11 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 			{
 				//No updates
 				ai.bNoUpdates = TRUE;
+			}
+			else if(cmdType == CTP_ARSO)
+			{
+				//ARSO option
+				ai.bUseARSO = TRUE;
 			}
 			else if(cmdType == CTP_REMOTE_COMPUTER)
 			{
@@ -486,6 +490,7 @@ CMD_TYPE CMain::getCommandType(LPCTSTR pStrCmd)
 				{CTP_SHOW_MESSAGE,		L"c"},
 				{CTP_REASON,		L"d"},
 				{CTP_ADVANCED_BOOT_MENU,		L"abo"},
+				{CTP_ARSO,		L"arso"},
 			};
 
 			for(int c = 0; c < SIZEOF(cmds); c++)
@@ -656,7 +661,9 @@ void CMain::ShowHelpInfo()
 
 	_tprintf(
 		L"Usage: ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]\n"
-		L"        [/m \\\\computer] [/t x] [/c \"msg\"] [/d [p|u:]xx:yy]\n"
+		L"        [/m \\\\computer] [/t x] [/c \"msg\"] [/d [p|u:]xx:yy] [/arso]\n"
+		L"\n"
+		L" Windows 10: This module may require to run as administrator to install updates.\n"
 		L"\n"
 		L"  /s    Install updates & shut down computer.\n"
 		L"         (Updates must be already downloaded on computer being shut down.)\n"
@@ -673,6 +680,8 @@ void CMain::ShowHelpInfo()
 		L"  /?    Show command line help.\n"
 		L"  /f    Use forced action.\n"
 		L"         WARNING: May result in the loss of unsaved data on target computer!\n"
+		L"  /arso Enables \"Winlogon automatic restart sign-on\". (Windows 10)\n"
+		L"         INFO: https://dennisbabkin.com/r/?to=arso\n"
 		L"  /v    Show user confirmation before proceeding.\n"
 		L"         (Local computer only. It is shown before time-out is initiated.)\n"
 		L"  /nu   Not to install updates.\n"
@@ -690,13 +699,13 @@ void CMain::ShowHelpInfo()
 		L"                   yy = minor reason number (greater than %d.)\n"
 		L"                        (Reason numbers can be decimal or hex if begin with 0x)\n"
 		L"        For major and minor reason values check \"System Shutdown Reason Codes\":\n"
-		L"         msdn.microsoft.com/en-us/library/windows/desktop/aa376885(v=vs.85).aspx\n"
+		L"         https://dennisbabkin.com/r/?to=win32sdrc\n"
 		L"\n"
 		L"Exit Codes:\n"
 		L" 0      if success.\n"
 		L" -1     if general failure in the module.\n"
 		L" Other  if error, will contain \"System Error Code\". For details check:\n"
-		L"         msdn.microsoft.com/en-us/library/windows/desktop/ms681381(v=vs.85).aspx\n"
+		L"         https://dennisbabkin.com/r/?to=win32errs\n"
 		L"\n"
 		L"Examples:\n"
 		L"(1) Install updates and reboot local computer without a delay:\n"
@@ -1242,6 +1251,11 @@ int CMain::ShowUserConfirmation(ACTIONS_INFO* pAI)
 				{
 					::StringCchPrintf(buffForced, SIZEOF(buffForced), L" (%s)", LOC_STRING(IDS_STRING107));		//L"forced"
 				}
+
+				if(pAI->bUseARSO)
+				{
+					::StringCchPrintf(buffForced, SIZEOF(buffForced), L" (%s)", LOC_STRING(IDS_STRING120));		//L"use ARSO"
+				}
 			}
 
 			//Computer
@@ -1652,7 +1666,7 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 
 
 	//Make shut-down flags
-	DWORD dwShutDownFlags = 0;
+	DWORD dwShutDownFlags =	0;
 
 	BOOL bSetShutdownPriv = FALSE;
 
@@ -1801,10 +1815,69 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 					pAI->pwrAction != PWR_OP_REBOOT)
 					)
 				{
+					BOOL bContinueWithPowerOp = TRUE;
+
 					//Installing updates?
 					if(!pAI->bNoUpdates)
 					{
 						dwShutDownFlags |= SHUTDOWN_INSTALL_UPDATES;
+
+						//Is it Windows 10?
+						RTL_OSVERSIONINFOW osi = {};
+						NTSTATUS (WINAPI *pfnRtlGetVersion)(
+						  PRTL_OSVERSIONINFOW lpVersionInformation
+						  );
+						(FARPROC&)pfnRtlGetVersion =
+						  ::GetProcAddress(::GetModuleHandle(L"ntdll.dll"), "RtlGetVersion");
+
+						if(pfnRtlGetVersion &&
+							pfnRtlGetVersion(&osi) == 0)
+						{
+							if(osi.dwMajorVersion >= 10)
+							{
+								//Check if update is ready to be installed, and if so
+								//mark it to be installed during shut-down/reboot.
+								//This applies only for the installation of major OS updates,
+								//or as Microsoft calls them "flights".
+								//INFO: Researched along with RbMm
+								//		https://github.com/rbmm
+								DWORD dwV = 1;
+								REG_WRITE_RES rgWrtRz = WriteValueToSystemRegistryIfKeyExists(HKEY_LOCAL_MACHINE,
+									L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Orchestrator\\InstallAtShutdown",
+									NULL, REG_DWORD, &dwV, sizeof(dwV));
+								if(rgWrtRz == RWR_SUCCESS ||
+									rgWrtRz == RWR_NO_KEY)
+								{
+									//Success, can continue with the power operation
+									//NOTE that this key will be removed and later recreated during the boot ...
+								}
+								else
+								{
+									//Error
+									nResOSErrCode = ::GetLastError();
+									ASSERT(rgWrtRz == RWR_ERROR);
+
+									//Do not proceed with the power operation as update will not be installed!
+									bContinueWithPowerOp = FALSE;
+
+									if(nResOSErrCode == ERROR_ACCESS_DENIED)
+									{
+										_tprintf(L"ERROR: Failed to enable installation of updates. "
+											L"Make sure that this module is running with administrative permissions, or specify /nu option.\n");
+									}
+									else
+									{
+										//Some other error
+										_tprintf(L"ERROR: Failed to enable installation of updates: (%d) %s\n",
+											nResOSErrCode,
+											CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
+											);
+									}
+								}
+							}
+						}
+						else
+							ASSERT(NULL);
 					}
 
 					//Forced?
@@ -1813,15 +1886,29 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 						dwShutDownFlags |= SHUTDOWN_FORCE_SELF | SHUTDOWN_FORCE_OTHERS;
 					}
 
+					//ARSO?
+					if(pAI->bUseARSO)
+					{
+						dwShutDownFlags |= SHUTDOWN_ARSO;
+					}
 
-					//Now execute power op
-					::SetLastError(NO_ERROR);
-					nResOSErrCode = ::InitiateShutdown(
-						pStrCompNm,
-						nLnMessage > 0 ? pStrMessage : NULL,
-						pAI->nTimeoutSec, 
-						dwShutDownFlags,
-						pAI->dwReason);
+
+					if(bContinueWithPowerOp)
+					{
+#ifndef TEST_POWER_OP
+						//Now execute power op
+						::SetLastError(NO_ERROR);
+						nResOSErrCode = ::InitiateShutdown(
+							pStrCompNm,
+							nLnMessage > 0 ? pStrMessage : NULL,
+							pAI->nTimeoutSec, 
+							dwShutDownFlags,
+							pAI->dwReason);
+#else
+						//Simulate success
+						nResOSErrCode = 0;
+#endif
+					}
 				}
 				else
 				{
@@ -1842,6 +1929,7 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 					if(bRebootAfter == TRUE ||
 						bRebootAfter == FALSE)
 					{
+#ifndef TEST_POWER_OP
 						//Initiate now
 						::SetLastError(NO_ERROR);
 						if(::InitiateSystemShutdownEx(
@@ -1860,6 +1948,10 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 							//Failed
 							nResOSErrCode = ::GetLastError();
 						}
+#else
+						//Simulate syccess
+						nResOSErrCode = 0;
+#endif
 					}
 					else
 					{
@@ -1910,6 +2002,54 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 	return nResOSErrCode;
 }
 
+REG_WRITE_RES CMain::WriteValueToSystemRegistryIfKeyExists(HKEY hIniKey, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz)
+{
+	//Write value into the 'lpSubKey' key, into 'lpKeyValue' value
+	//'hIniKey' = Initial key. Can be also: HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, etc.
+	//'dwValueType' = Could be REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD
+	//'pData' = data to write
+	//'ncbDataSz' = size of 'pData' in BYTEs
+	//RETURN:
+	//		= TRUE if done
+	HKEY hKey;
+	DWORD dwR;
+	REG_WRITE_RES res = RWR_ERROR;
+	REGSAM dwSam;
+
+#ifdef _M_X64
+	//64-bit
+	dwSam = KEY_SET_VALUE;
+#else
+	//32-bit
+	dwSam = KEY_SET_VALUE | KEY_WOW64_64KEY;
+#endif
+
+	dwR = RegOpenKeyEx(hIniKey, lpSubKey, 0, dwSam, &hKey);
+	if(dwR == ERROR_SUCCESS)
+	{
+		//Set value
+		if((dwR = RegSetValueEx(hKey, lpKeyValue, NULL, dwValueType, (const BYTE *)pData, ncbDataSz)) == ERROR_SUCCESS)
+		{
+			//Done
+			res = RWR_SUCCESS;
+		}
+
+		//Close key
+		RegCloseKey(hKey);
+	}
+	else if(dwR == ERROR_FILE_NOT_FOUND ||
+		dwR == ERROR_PATH_NOT_FOUND)
+	{
+		//Key doesn't exist
+		res = RWR_NO_KEY;
+	}
+
+	//Set last error
+	::SetLastError(dwR);
+
+	return res;
+}
+
 
 
 void CMain::outputMainLogo()
@@ -1929,6 +2069,70 @@ void CMain::outputMainLogo()
 		);
 
 }
+
+TCHAR* CMain::FormatDateTime(FILETIME* pFtUtc, TCHAR* pBuff, int nchLnBuff, BOOL bConvertToLocal)
+{
+	//Format date/time from 'pFtUtc' into a string
+	//'pFt' = pointer to FILETIME, expressed as a number of 100-ns intervals since midnight of Jan-1-1601, for UTC time zone
+	//'pBuff' = buffer to output result to - must be provided! It will always contain a null-terminated string upon return.
+	//'nchLnBuff' = size of 'pBuff' in WCHARs
+	//'bConvertToLocal' = TRUE to convert 'pFtUtc' from UTC to local time zone
+	//RETURN:
+	//		= Pointer to 'pBuff'
+	ASSERT(pBuff);
+	ASSERT(nchLnBuff > 0);
+
+	if(nchLnBuff > 0)
+	{
+		pBuff[0] = 0;
+
+		if(pFtUtc)
+		{
+			SYSTEMTIME st = {};
+			if(::FileTimeToSystemTime(pFtUtc, &st))
+			{
+				BOOL bContinue = TRUE;
+				if(bConvertToLocal)
+				{
+					SYSTEMTIME stLoc = {};
+					if(::SystemTimeToTzSpecificLocalTime(NULL, &st, &stLoc))
+					{
+						st = stLoc;
+					}
+					else
+					{
+						ASSERT(NULL);
+						bContinue = FALSE;
+					}
+				}
+
+				if(bContinue)
+				{
+					WCHAR buffD[128] = {};
+					WCHAR buffT[128] = {};
+					if(::GetDateFormat(LOCALE_USER_DEFAULT, DATE_SHORTDATE, &st, NULL, buffD, _countof(buffD)) &&
+						::GetTimeFormat(LOCALE_USER_DEFAULT, 0, &st, NULL, buffT, _countof(buffT)))
+					{
+						if(FAILED(::StringCchPrintf(pBuff, nchLnBuff, L"%s %s", buffD, buffT)))
+						{
+							ASSERT(NULL);
+						}
+					}
+					else
+						ASSERT(NULL);
+				}
+			}
+			else
+				ASSERT(NULL);
+		}
+
+		//Safety null
+		pBuff[nchLnBuff - 1] = 0;
+	}
+
+	return pBuff;
+}
+
 
 
 

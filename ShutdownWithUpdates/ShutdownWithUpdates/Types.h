@@ -3,7 +3,7 @@
 /*
  * ShutdownWithUpdates
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
- * Copyright (c) 2016-2019 www.dennisbabkin.com
+ * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
  *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
  *
@@ -46,6 +46,7 @@ enum CMD_TYPE{
 	CTP_TIMEOUT,					//-t
 	CTP_SHOW_MESSAGE,				//-c
 	CTP_REASON,						//-d
+	CTP_ARSO,						//-arso
 };
 
 
@@ -73,6 +74,11 @@ enum POWER_OP{
 #endif
 
 
+//https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/winlogon-automatic-restart-sign-on--arso-
+#define SHUTDOWN_ARSO 0x00002000
+#define EWX_ARSO 0x04000000
+
+
 
 
 struct ACTIONS_INFO{
@@ -81,6 +87,7 @@ struct ACTIONS_INFO{
 	BOOL bForced;
 	BOOL bVerbose;
 	BOOL bNoUpdates;
+	BOOL bUseARSO;		//See https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/winlogon-automatic-restart-sign-on--arso-
 
 	LPCTSTR pStrRemoteCompName;
 	int nTimeoutSec;
@@ -94,6 +101,7 @@ struct ACTIONS_INFO{
 		bForced = FALSE;
 		bVerbose = FALSE;
 		bNoUpdates = FALSE;
+		bUseARSO = FALSE;
 
 		pStrRemoteCompName = NULL;
 		nTimeoutSec = 0;
@@ -208,6 +216,12 @@ private:
 };
 
 
+
+enum REG_WRITE_RES{
+	RWR_SUCCESS = 0,
+	RWR_ERROR = -1,			//Check GetLastError() for details
+	RWR_NO_KEY = 1,
+};
 
 
 

@@ -3,7 +3,7 @@
 /*
  * ShutdownWithUpdates
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
- * Copyright (c) 2016-2019 www.dennisbabkin.com
+ * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
  *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
  *

@@ -28,8 +28,9 @@
 #include "rtlVersion.h"
 
 
-#define PROG_VER L"1.2.1.0"		//Program version
+#define PROG_VER L"1.2.2.0"		//Program version
 
+//#define TEST_POWER_OP			//Uncomment this line to simulate power operations
 
 
 #define SIZEOF(f) (sizeof(f)/sizeof(f[0]))

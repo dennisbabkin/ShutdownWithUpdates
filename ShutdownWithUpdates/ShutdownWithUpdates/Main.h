@@ -1,7 +1,7 @@
 /*
  * ShutdownWithUpdates
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
- * Copyright (c) 2016-2019 www.dennisbabkin.com
+ * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
  *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
  *
@@ -57,6 +57,8 @@ protected:
 	static TCHAR* FormatErrorMessage(int nOSError, TCHAR* pBuff, int nchLnBuff, BOOL bUseDescriptionForNoError = FALSE);
 	static BOOL SetNeededShutdownPrivileges(LPCTSTR pStrRemoteCompName);
 	static int doActions(ACTIONS_INFO* pAI);
+	static REG_WRITE_RES WriteValueToSystemRegistryIfKeyExists(HKEY hIniKey, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz);
 	static void outputMainLogo();
+	static TCHAR* FormatDateTime(FILETIME* pFtUtc, TCHAR* pBuff, int nchLnBuff, BOOL bConvertToLocal = TRUE);
 
 };
