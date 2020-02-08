@@ -32,7 +32,7 @@ the OS will simply perform the power operation.
 ### Basic Operation
 
 Usage:
-> ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu] [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy]
+> ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu] [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy] [/arso]
 
 -  `/s`    Install updates & shut down computer.
          (Updates must be already downloaded on computer being shut down.)
@@ -49,6 +49,8 @@ Usage:
 -  `/?`    Show command line help.
 -  `/f`    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
+-  `/arso` Enables "Winlogon automatic restart sign-on". (Windows 10)
+            INFO: https://dennisbabkin.com/r/?to=arso
 -  `/v`    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
 -  `/nu`   Not to install updates.
@@ -65,12 +67,12 @@ Usage:
    -  `xx` = major reason number (less than 65536.)
    -  `yy` = minor reason number (greater than 65536.)
                         (Reason numbers can be decimal or hex if begin with `0x`)
-        For major and minor reason values check "[System Shutdown Reason Codes](https://docs.microsoft.com/en-us/windows/desktop/shutdown/system-shutdown-reason-codes)".
+        For major and minor reason values check "[System Shutdown Reason Codes](https://dennisbabkin.com/r/?to=win32sdrc)".
 
 Exit Codes:
 - `0`      if success.
 - `-1`     if general failure in the module.
-- `Other`  if error, will contain "[System Error Code](https://docs.microsoft.com/en-us/windows/desktop/debug/system-error-codes)".
+- `Other`  if error, will contain "[System Error Code](https://dennisbabkin.com/r/?to=win32errs)".
 
 -------------
 
