@@ -50,7 +50,7 @@ Usage:
 -  `/f`    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
 -  `/arso` Enables "Winlogon automatic restart sign-on". (Windows 10)
-            INFO: https://dennisbabkin.com/r/?to=arso
+            [Check here](https://dennisbabkin.com/r/?to=arso) for more info.
 -  `/v`    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
 -  `/nu`   Not to install updates.
