@@ -97,6 +97,6 @@ Exit Codes:
 --------------
 
 
-Submit feedback & bug reports [here](https://www.dennisbabkin.com/sfb/?what=info&name=ShutdownWithUpdates).
+Submit suggestions & bug reports [here](https://www.dennisbabkin.com/sfb/?what=bug&name=ShutdownWithUpdates&ver=Github).
 
 
