@@ -1,9 +1,9 @@
 Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot
-v.1.2.2.0
+v.1.2.4.0
 Copyright (c) 2016-2018 by www.dennisbabkin.com. All rights reserved.
 (Windows Vista/7/8/8.1/10)
 
-LAST MODIFIED: February 8, 2020
+LAST MODIFIED: January 20, 2021
 
 
 DESCRIPTION:
@@ -17,10 +17,12 @@ Additional: Major updates, such as Windows Feature Updates, may require user int
             cannot be overridden by this tool.
 
 
-Usage: ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]
+Usage:
+       ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]
         [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy] [/arso]
+        [/irr | /crr | /wrr]
 
- Windows 10: This module may require to run as administrator to install updates.
+ Windows 10: This process may require to run as administrator for some options.
 
   /s    Install updates & shut down computer.
          (Updates must be already downloaded on computer being shut down.)
@@ -34,15 +36,22 @@ Usage: ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]
          (Pre-Windows 10: Updates will not be installed.)
   /a    Abort previous shut-down/rebooting.
          (Can be used only during previous time-out period.)
-  /?    Show command line help.
-  /arso Enables "Winlogon automatic restart sign-on". (Windows 10)
-         INFO: https://dennisbabkin.com/r/?to=arso
   /f    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
+  /irr  Allow operations only if updates are installed and ready for reboot.
+         (Local Windows 10 only.)
+         (Will exit with error code 1235 if updates are not ready.)
+  /crr  Only check if updates are installed and ready for reboot.
+         (Local Windows 10 only. Can't be used with other parameters.)
+         (Will exit with code 0 if updates are not ready, or 350 if they are.)
+  /wrr  Wait for updates to be installed and ready for reboot before proceeding.
+         (Local Windows 10 only.)
+  /arso Enables "Winlogon automatic restart sign-on". (Local Windows 10 only.)
+         INFO: https://dennisbabkin.com/r/?to=arso
   /v    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
   /nu   Not to install updates.
-         (Windows 10: This option is not supported.)
+         (Local Windows 10 only. Must be running as administrator.)
   /m \\computer    Specify target/remote computer.
   /t x  Set time-out before performing action to x seconds.
          (Valid range is 0-315360000, or 10 yrs, with a default of 0.)
@@ -58,13 +67,13 @@ Usage: ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]
         For major and minor reason values check "System Shutdown Reason Codes":
          https://dennisbabkin.com/r/?to=win32sdrc
 
+  /?    Show command line help.
 
 Exit Codes:
  0      if success.
  -1     if general failure in the module.
  Other  if error, will contain "System Error Code". For details check:
          https://dennisbabkin.com/r/?to=win32errs
-
 
 Examples:
 (1) Install updates and reboot local computer without a delay:
@@ -77,13 +86,28 @@ Examples:
 
       ShutdownWithUpdates /s /f /t 30 /c "Forced shut-down in 30 sec!"
 
-(3) Do not install updates and reboot remote computer after a 20 sec delay:
-    (Not supported under Windows 10.)
+(3) Reboot local computer only if updates are ready to install:
+    (Fail if unsaved user data on computer, or updates aren't ready.)
+
+      ShutdownWithUpdates /r /irr
+
+(4) Simply wait until updates are ready to install on local computer,
+     and then start a calculator:
+
+      ShutdownWithUpdates /wrr
+      calc.exe
+
+(5) Do not install updates and shut down local computer:
+    (Fail if unsaved user data on computer. Must run as administrator!)
+
+      ShutdownWithUpdates /s /nu
+
+(6) Do not install updates and reboot remote computer after a 20 sec delay:
+    (/nu option is not supported on Windows 10 for remote computer.)
     (Fail if unsaved user data on remote computer.)
     (Specify reason as planned, application issue, installation.)
 
       ShutdownWithUpdates /r /nu /m \\MYSERVER /t 20 /d p:0x00040000:0x00000002
-
 
 
 ** This is an Open Source project. **
@@ -92,9 +116,8 @@ Examples:
 
 
 
-
 To download your copy go to:
-https://www.dennisbabkin.com/ShutdownWithUpdates
+https://www.dennisbabkin.com/shutdownwithupdates
 
 For bug reports go to:
 https://www.dennisbabkin.com/sfb/?what=bug&name=ShutdownWithUpdates
