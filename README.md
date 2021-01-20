@@ -106,6 +106,7 @@ Exit Codes:
      and then start a calculator:
 
 >ShutdownWithUpdates /wrr
+
 >calc.exe
 
 5. Do not install updates and shut down local computer:
