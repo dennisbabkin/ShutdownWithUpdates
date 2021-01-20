@@ -35,40 +35,40 @@ Usage:
 
  Windows 10: This process may require to run as administrator for some options.
 
--  /s    Install updates & shut down computer.
+-  `/s`    Install updates & shut down computer.
          (Updates must be already downloaded on computer being shut down.)
--  /r    Install updates & reboot computer.
+-  `/r`    Install updates & reboot computer.
          (Updates must be already downloaded on computer being rebooted.)
--  /hs   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
+-  `/hs`   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
          (Updates must be already downloaded on computer being shut down.)
--  /g    Install updates & reboot computer & restart registered applications.
+-  `/g`    Install updates & reboot computer & restart registered applications.
          (Updates must be already downloaded on computer being rebooted.)
--  /abo  Go to advanced boot options menu. (Windows 8,10)
+-  `/abo`  Go to advanced boot options menu. (Windows 8,10)
          (Pre-Windows 10: Updates will not be installed.)
--  /a    Abort previous shut-down/rebooting.
+-  `/a`    Abort previous shut-down/rebooting.
          (Can be used only during previous time-out period.)
--  /f    Use forced action.
+-  `/f`    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
--  /irr  Allow operations only if updates are installed and ready for reboot.
+-  `/irr`  Allow operations only if updates are installed and ready for reboot.
          (Local Windows 10 only.)
          (Will exit with error code 1235 if updates are not ready.)
--  /crr  Only check if updates are installed and ready for reboot.
+-  `/crr`  Only check if updates are installed and ready for reboot.
          (Local Windows 10 only. Can't be used with other parameters.)
          (Will exit with code 0 if updates are not ready, or 350 if they are.)
--  /wrr  Wait for updates to be installed and ready for reboot before proceeding.
+-  `/wrr`  Wait for updates to be installed and ready for reboot before proceeding.
          (Local Windows 10 only.)
--  /arso Enables "Winlogon automatic restart sign-on". (Local Windows 10 only.)
+-  `/arso` Enables "Winlogon automatic restart sign-on". (Local Windows 10 only.)
          INFO: https://dennisbabkin.com/r/?to=arso
--  /v    Show user confirmation before proceeding.
+-  `/v`    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
--  /nu   Not to install updates.
+-  `/nu`   Not to install updates.
          (Local Windows 10 only. Must be running as administrator.)
--  /m \\computer    Specify target/remote computer.
--  /t x  Set time-out before performing action to x seconds.
+-  `/m \\computer`    Specify target/remote computer.
+-  `/t x`  Set time-out before performing action to x seconds.
          (Valid range is 0-315360000, or 10 yrs, with a default of 0.)
--  /c "msg"      Message to be displayed in the interactive shutdown dialog box.
+-  `/c "msg"`      Message to be displayed in the interactive shutdown dialog box.
                  (Maximum of 512 characters is allowed.)
--  /d [p|u:]xx:yy  Reason for shut-down or rebooting (used for logging):
+-  `/d [p|u:]xx:yy`  Reason for shut-down or rebooting (used for logging):
                    p if action was planned.
                    u if action was user-defined.
                    (If neither p or u is used, assumes unplanned.)
@@ -78,17 +78,18 @@ Usage:
         For major and minor reason values check "System Shutdown Reason Codes":
          https://dennisbabkin.com/r/?to=win32sdrc
 
--  /?    Show command line help.
+-  `/?`    Show command line help.
 
 Exit Codes:
-- 0      if success.
-- -1     if general failure in the module.
-- Other  if error, will contain "System Error Code". For details check:
+- `0`      if success.
+- `-1`     if general failure in the module.
+- `Other`  if error, will contain "System Error Code". For details check:
          https://dennisbabkin.com/r/?to=win32errs
          
 -------------
 
 #### Examples:
+
 1. Install updates and reboot local computer without a delay:
     (Fail if unsaved user data on computer.)
 
@@ -99,9 +100,26 @@ Exit Codes:
 
 >      ShutdownWithUpdates /s /f /t 30 /c "Forced shut-down in 30 sec!"
 
-3. Do not install updates and reboot remote computer after a 20 sec delay:
-    (Not supported under Windows 10. Fail if unsaved user data on remote computer.
-    Specify reason as planned, application issue, installation.)
+3. Reboot local computer only if updates are ready to install:
+    (Fail if unsaved user data on computer, or updates aren't ready.)
+
+>      ShutdownWithUpdates /r /irr
+
+4. Simply wait until updates are ready to install on local computer,
+     and then start a calculator:
+
+>      ShutdownWithUpdates /wrr
+>      calc.exe
+
+5. Do not install updates and shut down local computer:
+    (Fail if unsaved user data on computer. Must run as administrator!)
+
+>      ShutdownWithUpdates /s /nu
+
+6. Do not install updates and reboot remote computer after a 20 sec delay:
+    (/nu option is not supported on Windows 10 for remote computer.)
+    (Fail if unsaved user data on remote computer.)
+    (Specify reason as planned, application issue, installation.)
 
 >      ShutdownWithUpdates /r /nu /m \\MYSERVER /t 20 /d p:0x00040000:0x00000002
 
