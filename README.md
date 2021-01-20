@@ -90,35 +90,35 @@ Exit Codes:
 1. Install updates and reboot local computer without a delay:
     (Fail if unsaved user data on computer.)
 
->      ShutdownWithUpdates /r
+>ShutdownWithUpdates /r
 
 2. Install updates and shut down local computer after 30 sec delay:
     (Force applications with unsaved data to close & lose data! Show message.)
 
->      ShutdownWithUpdates /s /f /t 30 /c "Forced shut-down in 30 sec!"
+>ShutdownWithUpdates /s /f /t 30 /c "Forced shut-down in 30 sec!"
 
 3. Reboot local computer only if updates are ready to install:
     (Fail if unsaved user data on computer, or updates aren't ready.)
 
->      ShutdownWithUpdates /r /irr
+>ShutdownWithUpdates /r /irr
 
 4. Simply wait until updates are ready to install on local computer,
      and then start a calculator:
 
->      ShutdownWithUpdates /wrr
->      calc.exe
+>ShutdownWithUpdates /wrr
+>calc.exe
 
 5. Do not install updates and shut down local computer:
     (Fail if unsaved user data on computer. Must run as administrator!)
 
->      ShutdownWithUpdates /s /nu
+>ShutdownWithUpdates /s /nu
 
 6. Do not install updates and reboot remote computer after a 20 sec delay:
     (/nu option is not supported on Windows 10 for remote computer.)
     (Fail if unsaved user data on remote computer.)
     (Specify reason as planned, application issue, installation.)
 
->      ShutdownWithUpdates /r /nu /m \\MYSERVER /t 20 /d p:0x00040000:0x00000002
+>ShutdownWithUpdates /r /nu /m \\MYSERVER /t 20 /d p:0x00040000:0x00000002
 
 
 --------------
