@@ -57,8 +57,7 @@ Usage:
          (Will exit with code 0 if updates are not ready, or 350 if they are.)
 -  `/wrr`  Wait for updates to be installed and ready for reboot before proceeding.
          (Local Windows 10 only.)
--  `/arso` Enables "Winlogon automatic restart sign-on". (Local Windows 10 only.)
-         INFO: https://dennisbabkin.com/r/?to=arso
+-  `/arso` Enables "[Winlogon automatic restart sign-on](https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/winlogon-automatic-restart-sign-on--arso-)". (Local Windows 10 only.)
 -  `/v`    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
 -  `/nu`   Not to install updates.
@@ -75,16 +74,14 @@ Usage:
                    xx = major reason number (less than 65536.)
                    yy = minor reason number (greater than 65536.)
                         (Reason numbers can be decimal or hex if begin with 0x)
-        For major and minor reason values check "System Shutdown Reason Codes":
-         https://dennisbabkin.com/r/?to=win32sdrc
+        For major and minor reason values check "[System Shutdown Reason Codes](https://docs.microsoft.com/en-us/windows/win32/shutdown/system-shutdown-reason-codes)":
 
 -  `/?`    Show command line help.
 
 Exit Codes:
 - `0`      if success.
 - `-1`     if general failure in the module.
-- `Other`  if error, will contain "System Error Code". For details check:
-         https://dennisbabkin.com/r/?to=win32errs
+- `Other`  if error, will contain "[System Error Code](https://docs.microsoft.com/en-us/windows/win32/debug/system-error-codes)".
          
 -------------
 
