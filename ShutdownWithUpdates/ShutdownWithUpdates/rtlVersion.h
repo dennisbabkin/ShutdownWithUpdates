@@ -5,7 +5,7 @@
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
  * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
- *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
+ *     https://dennisbabkin.com/shutdownwithupdates/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ struct RTL_OS_VERSION{
 	static BOOL GetVersionEx2(OSVERSIONINFO* pOutVersionInfo, BOOL bAllowOriginalAPIAsFallback = TRUE)
 	{
 		//Retrieve "real" OS version
-		//INFO: It uses kernel-mode API that does not depend on the manifest included in the executable!
+		//INFO: It uses native API that does not depend on the manifest included in the executable!
 		//'pOutVersionInfo' = struct to fill in, may point to OSVERSIONINFO or OSVERSIONINFOEX structs
 		//						INFO: Make sure to fill in its 'dwOSVersionInfoSize' to the struct size!
-		//'bAllowOriginalAPIAsFallback' = TRUE to use original "deprecated" API if this kernel-mode fails, FALSE - not to
+		//'bAllowOriginalAPIAsFallback' = TRUE to use original "deprecated" API if this native API fails, FALSE - not to
 		//RETURN:
 		//		= TRUE if success
 		//		= FALSE if error (check GetLastError() for info)

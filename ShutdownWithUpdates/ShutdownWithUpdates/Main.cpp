@@ -3,7 +3,7 @@
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
  * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
- *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
+ *     https://dennisbabkin.com/shutdownwithupdates/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,7 @@ int CMain::doWork(int argc, _TCHAR* argv[])
 	//		= See _tmain()
 	int nRes = ERROR_GEN_FAILURE;
 
+
 	__try
 	{
 		nRes = doWork_RAW(argc, argv);
@@ -38,6 +39,7 @@ int CMain::doWork(int argc, _TCHAR* argv[])
 	__except(1)
 	{
 		//Exception
+		EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(100);
 		nRes = -1;
 
 		_tprintf(L"FATAL ERROR: Contact developers: support@dennisbabkin.com\n");
@@ -59,18 +61,37 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 	if(argc > 1)
 	{
 		//Check for arguments provided
+		REBOOT_REQUIRED_CLAUSE rrc;
 
 		BOOL bDoActions = FALSE;				//TRUE to do power op actions
 
 		ACTIONS_INFO ai;
 
 		//See what version of Windows we're running on
-		OSVERSIONINFO osi;
-		osi.dwOSVersionInfoSize = sizeof(osi);
-		BOOL bGV = RTL_OS_VERSION::GetVersionEx2(&osi);
+		BOOL bWin10 = FALSE;	//TRUE for Windows 10, or later
+		BOOL bWin8 = FALSE;		//TRUE for Windows 8, or later
 
-		//Is it Windows 8 or later?
-		BOOL bWin8 = bGV && ((osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 2) || osi.dwMajorVersion > 6);
+		RTL_OSVERSIONINFOW osi = {};
+		if(GetWindowsVersion(&osi))
+		{
+			if((osi.dwMajorVersion == 6 && osi.dwMinorVersion >= 2) || osi.dwMajorVersion > 6)
+			{
+				bWin8 = TRUE;
+			}
+
+			if(osi.dwMajorVersion >= 10)
+			{
+				bWin10 = TRUE;
+			}
+		}
+		else
+		{
+			EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(137);
+			ASSERT(NULL);
+		}
+
+
+
 
 
 		//Go through command line arguments
@@ -102,6 +123,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(102, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -120,6 +143,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(103, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -142,6 +167,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 					else
 					{
 						//Error
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(104, L"cmd: %s", pStrCmd);
+
 						_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 						bDoActions = FALSE;
@@ -152,6 +179,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(105, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Parameter not supported on this OS: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -170,6 +199,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(106, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -192,6 +223,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 					else
 					{
 						//Error
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(107, L"cmd: %s", pStrCmd);
+
 						_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 						bDoActions = FALSE;
@@ -202,6 +235,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(108, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Parameter not supported on this OS: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -220,6 +255,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(109, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Power action is already defined before parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -247,6 +284,58 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				//ARSO option
 				ai.bUseARSO = TRUE;
 			}
+			else if(cmdType == CTP_IF_REBOOT_REQUIRED)
+			{
+				//If reboot required
+				rrc = RR_C_IF_REBOOT_REQUIRED;
+
+				goto lbl_chk_rr;
+			}
+			else if(cmdType == CTP_CHECK_REBOOT_REQUIRED)
+			{
+				//Check reboot required
+				rrc = RR_C_CHECK_REBOOT_REQUIRED;
+
+				goto lbl_chk_rr;
+			}
+			else if(cmdType == CTP_WAIT_REBOOT_REQUIRED)
+			{
+				//Wait for reboot required
+				rrc = RR_C_WAIT_FOR_REBOOT_REQUIRED;
+lbl_chk_rr:
+				if(bWin10)
+				{
+					//Make sure that the user doesn't mix these parameters
+					if(ai.rebootReq == RR_C_None ||
+						ai.rebootReq == rrc)
+					{
+						//Set it
+						ai.rebootReq = rrc;
+					}
+					else
+					{
+						//Error in command line
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(134, L"cmd: %s", pStrCmd);
+
+						_tprintf(L"ERROR: Check-updates parameter was already set before: %s\n", pStrCmd);
+
+						bDoActions = FALSE;
+						nResOSErrCode = 1783;
+						break;
+					}
+				}
+				else
+				{
+					//Unsupported OS
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(138, L"cmd: %s", pStrCmd);
+
+					_tprintf(L"ERROR: Check-updates parameter is not supported on this OS: %s\n", pStrCmd);
+
+					bDoActions = FALSE;
+					nResOSErrCode = ERROR_NOT_SUPPORTED;
+					break;
+				}
+			}
 			else if(cmdType == CTP_REMOTE_COMPUTER)
 			{
 				//Remove computer
@@ -258,6 +347,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(110, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Remote computer name is required for parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -283,6 +374,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 						else
 						{
 							//Error
+							EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(111, L"v=%s, cmd=%s", pStrParam, pStrCmd);
+
 							_tprintf(L"ERROR: Invalid time-out value (%s) for parameter: %s\n", pStrParam, pStrCmd);
 
 							bDoActions = FALSE;
@@ -293,6 +386,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 					else
 					{
 						//Error
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(112, L"cmd: %s", pStrCmd);
+
 						_tprintf(L"ERROR: Failed to parse time-out value for parameter: %s\n", pStrCmd);
 
 						bDoActions = FALSE;
@@ -303,6 +398,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(113, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Time-out value in seconds is required for parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -321,6 +418,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(114, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Message text is required for parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -339,6 +438,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 					if(!CMain::parseReasonParam(pStrParam, &ai.dwReason))
 					{
 						//Failed to parse
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(115, L"cmd: %s", pStrCmd);
+
 						_tprintf(L"ERROR: Failed to parse shut-down/rebooting reason parameter: %s\n", pStrParam);
 
 						bDoActions = FALSE;
@@ -349,6 +450,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				else
 				{
 					//Error
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(116, L"cmd: %s", pStrCmd);
+
 					_tprintf(L"ERROR: Shut-down/rebooting reason value is required for parameter: %s\n", pStrCmd);
 
 					bDoActions = FALSE;
@@ -362,6 +465,8 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				if(pStrCmd[0])
 				{
 					//Show warning
+					EVENT_LOG_REPORTS::ReportEventLogMsgWARNING_WithFormat(L"[117] cmd: %s", pStrCmd);
+
 					_tprintf(L"WARNING: Unexpected argument: %s\n", pStrCmd);
 				}
 				else
@@ -373,14 +478,20 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 				if(pStrCmd[0])
 				{
 					//Show warning
+					EVENT_LOG_REPORTS::ReportEventLogMsgWARNING_WithFormat(L"[118] cmd=%s", pStrCmd);
+
 					_tprintf(L"WARNING: Unknown command: %s\n", pStrCmd);
 				}
 				else
+				{
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(119, L"cmd=%s", pStrCmd);
 					ASSERT(NULL);
+				}
 			}
 			else
 			{
 				//Error
+				EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(120, L"cmd=%s", pStrCmd);
 				ASSERT(NULL);
 
 				_tprintf(L"ERROR: Bad command: %s\n", pStrCmd);
@@ -395,34 +506,49 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 		//Are we doing the power op
 		if(bDoActions)
 		{
-			//Do we need to ask user?
-			if(ai.bVerbose)
+			//See that some special options aren't used
+			if(ai.rebootReq != RR_C_CHECK_REBOOT_REQUIRED)
 			{
-				//Need to ask by showing UI
-				//		= 1 if we're allowed to continue
-				//		= 0 if user canceled (and we're not allowed to continue)
-				//		= -1 if error (check GetLastError() for info) -- we're not allowed to continue
-				int nResUI = ShowUserConfirmation(&ai);
-				if(nResUI == 0)
+				//Do we need to ask user?
+				if(ai.bVerbose)
 				{
-					//User canceled
-					bDoActions = FALSE;
-					nResOSErrCode = ERROR_CANCELLED;
+					//Need to ask by showing UI
+					//		= 1 if we're allowed to continue
+					//		= 0 if user canceled (and we're not allowed to continue)
+					//		= -1 if error (check GetLastError() for info) -- we're not allowed to continue
+					int nResUI = ShowUserConfirmation(&ai);
+					if(nResUI == 0)
+					{
+						//User canceled
+						bDoActions = FALSE;
+						nResOSErrCode = ERROR_CANCELLED;
+					}
+					else if(nResUI != 1)
+					{
+						//Error
+						bDoActions = FALSE;
+						nResOSErrCode = ::GetLastError();
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(121, L"r=%d", nResUI);
+					}
 				}
-				else if(nResUI != 1)
+
+
+
+				//Still allowed
+				if(bDoActions)
 				{
-					//Error
-					bDoActions = FALSE;
-					nResOSErrCode = ::GetLastError();
+					//Perform actions
+					nResOSErrCode = doActions(&ai);
+
 				}
 			}
-
-			//Still allowed
-			if(bDoActions)
+			else
 			{
-				//Perform actions
-				nResOSErrCode = doActions(&ai);
+				EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(145);
 
+				_tprintf(L"ERROR: Check-updates parameter must be used alone: -crr\n");
+
+				nResOSErrCode = 1783;
 			}
 		}
 		else
@@ -430,12 +556,63 @@ int CMain::doWork_RAW(int argc, _TCHAR* argv[])
 			//Did we get an error?
 			if(nResOSErrCode == ERROR_GEN_FAILURE)
 			{
-				//Not enough parameters
+				//Do we have to check for reboot-required?
+				if(ai.rebootReq != RR_C_None)
+				{
+					if(ai.rebootReq == RR_C_CHECK_REBOOT_REQUIRED)
+					{
+						//Check if reboot is required
+						RES_YES_NO_ERR resRR = CMain::IsRebootRequired();
+						if(resRR == RYNE_YES ||
+							resRR == RYNE_NO)
+						{
+							//Output result
+							if(resRR == RYNE_YES)
+							{
+								nResOSErrCode = ERROR_FAIL_NOACTION_REBOOT;		// 350
+								_tprintf(L"Reboot is required to install updates\n");
+							}
+							else
+							{
+								nResOSErrCode = 0;
+								_tprintf(L"Reboot to install updates is not required now\n");
+							}
+						}
+						else
+						{
+							//Error
+							nResOSErrCode = GetLastError();
+							EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(136);
+							ASSERT(NULL);
+
+							_tprintf(L"ERROR: Failed to determine reboot-required status\n");
+						}
+					}
+					else if(ai.rebootReq == RR_C_WAIT_FOR_REBOOT_REQUIRED)
+					{
+						//Wait for reboot-enabled status to be on
+						nResOSErrCode = CheckOrWaitForRebootRequired(&ai, bWin10);
+						
+					}
+					else
+					{
+						//Warning
+						EVENT_LOG_REPORTS::ReportEventLogMsgWARNING_WithFormat(L"[135] Check-updates ignored: %d", ai.rebootReq);
+
+						_tprintf(L"WARNING: Check-updates parameter was ignored\n");
+					}
+				}
+				else
+				{
+					//Not enough parameters
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(122);
+
 #ifndef ERROR_INVALID_FIELD_IN_PARAMETER_LIST
 #define ERROR_INVALID_FIELD_IN_PARAMETER_LIST 328
 #endif
-				nResOSErrCode = ERROR_INVALID_FIELD_IN_PARAMETER_LIST;
-				_tprintf(L"ERROR: Not enough parameters\n");
+					nResOSErrCode = ERROR_INVALID_FIELD_IN_PARAMETER_LIST;
+					_tprintf(L"ERROR: Not enough parameters\n");
+				}
 			}
 		}
 	}
@@ -477,6 +654,7 @@ CMD_TYPE CMain::getCommandType(LPCTSTR pStrCmd)
 			static CMD_STR cmds[] = {
 				{CTP_SHOW_HELP,		L"?"},
 				{CTP_SHOW_HELP,		L"help"},
+				{CTP_SHOW_HELP,		L"h"},
 				{CTP_SHUT_DOWN,		L"s"},
 				{CTP_REBOOT,		L"r"},
 				{CTP_HYBRID_SHUT_DOWN,		L"hs"},
@@ -491,6 +669,9 @@ CMD_TYPE CMain::getCommandType(LPCTSTR pStrCmd)
 				{CTP_REASON,		L"d"},
 				{CTP_ADVANCED_BOOT_MENU,		L"abo"},
 				{CTP_ARSO,		L"arso"},
+				{CTP_IF_REBOOT_REQUIRED,		L"irr"},
+				{CTP_CHECK_REBOOT_REQUIRED,		L"crr"},
+				{CTP_WAIT_REBOOT_REQUIRED,		L"wrr"},
 			};
 
 			for(int c = 0; c < SIZEOF(cmds); c++)
@@ -660,10 +841,12 @@ void CMain::ShowHelpInfo()
 	//Show help information
 
 	_tprintf(
-		L"Usage: ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]\n"
+		L"Usage:\n"
+		L"       ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]\n"
 		L"        [/m \\\\computer] [/t x] [/c \"msg\"] [/d [p|u:]xx:yy] [/arso]\n"
+		L"        [/irr | /crr | /wrr]\n"
 		L"\n"
-		L" Windows 10: This module may require to run as administrator to install updates.\n"
+		L" Windows 10: This process may require to run as administrator for some options.\n"
 		L"\n"
 		L"  /s    Install updates & shut down computer.\n"
 		L"         (Updates must be already downloaded on computer being shut down.)\n"
@@ -677,15 +860,22 @@ void CMain::ShowHelpInfo()
 		L"         (Pre-Windows 10: Updates will not be installed.)\n"
 		L"  /a    Abort previous shut-down/rebooting.\n"
 		L"         (Can be used only during previous time-out period.)\n"
-		L"  /?    Show command line help.\n"
 		L"  /f    Use forced action.\n"
 		L"         WARNING: May result in the loss of unsaved data on target computer!\n"
-		L"  /arso Enables \"Winlogon automatic restart sign-on\". (Windows 10)\n"
+		L"  /irr  Allow operations only if updates are installed and ready for reboot.\n"
+		L"         (Local Windows 10 only.)\n"
+		L"         (Will exit with error code 1235 if updates are not ready.)\n"
+		L"  /crr  Only check if updates are installed and ready for reboot.\n"
+		L"         (Local Windows 10 only. Can't be used with other parameters.)\n"
+		L"         (Will exit with code 0 if updates are not ready, or 350 if they are.)\n"
+		L"  /wrr  Wait for updates to be installed and ready for reboot before proceeding.\n"
+		L"         (Local Windows 10 only.)\n"
+		L"  /arso Enables \"Winlogon automatic restart sign-on\". (Local Windows 10 only.)\n"
 		L"         INFO: https://dennisbabkin.com/r/?to=arso\n"
 		L"  /v    Show user confirmation before proceeding.\n"
 		L"         (Local computer only. It is shown before time-out is initiated.)\n"
 		L"  /nu   Not to install updates.\n"
-		L"         (Windows 10: This option is not supported.)\n"
+		L"         (Local Windows 10 only. Must be running as administrator.)\n"
 		L"  /m \\\\computer    Specify target/remote computer.\n"
 		L"  /t x  Set time-out before performing action to x seconds.\n"
 		L"         (Valid range is 0-%d, or 10 yrs, with a default of 0.)\n"
@@ -700,6 +890,8 @@ void CMain::ShowHelpInfo()
 		L"                        (Reason numbers can be decimal or hex if begin with 0x)\n"
 		L"        For major and minor reason values check \"System Shutdown Reason Codes\":\n"
 		L"         https://dennisbabkin.com/r/?to=win32sdrc\n"
+		L"\n"
+		L"  /?    Show command line help.\n"
 		L"\n"
 		L"Exit Codes:\n"
 		L" 0      if success.\n"
@@ -718,8 +910,24 @@ void CMain::ShowHelpInfo()
 		L"\n"
 		L"      ShutdownWithUpdates /s /f /t 30 /c \"Forced shut-down in 30 sec!\"\n"
 		L"\n"
-		L"(3) Do not install updates and reboot remote computer after a 20 sec delay:\n"
-		L"    (Not supported under Windows 10.)\n"
+		L"(3) Reboot local computer only if updates are ready to install:\n"
+		L"    (Fail if unsaved user data on computer, or updates aren't ready.)\n"
+		L"\n"
+		L"      ShutdownWithUpdates /r /irr\n"
+		L"\n"
+		L"(4) Simply wait until updates are ready to install on local computer,\n"
+		L"     and then start a calculator:\n"
+		L"\n"
+		L"      ShutdownWithUpdates /wrr\n"
+		L"      calc.exe\n"
+		L"\n"
+		L"(5) Do not install updates and shut down local computer:\n"
+		L"    (Fail if unsaved user data on computer. Must run as administrator!)\n"
+		L"\n"
+		L"      ShutdownWithUpdates /s /nu\n"
+		L"\n"
+		L"(6) Do not install updates and reboot remote computer after a 20 sec delay:\n"
+		L"    (/nu option is not supported on Windows 10 for remote computer.)\n"
 		L"    (Fail if unsaved user data on remote computer.)\n"
 		L"    (Specify reason as planned, application issue, installation.)\n"
 		L"\n"
@@ -1196,6 +1404,8 @@ int CMain::ShowUserConfirmation(ACTIONS_INFO* pAI)
 		//Compose message
 		TCHAR buffMsg[1024 * 2 + 512] = {0};
 
+		TCHAR buff[256];
+
 		//Power op
 		TCHAR buffPowerOp[1024] = {0};
 
@@ -1244,17 +1454,30 @@ int CMain::ShowUserConfirmation(ACTIONS_INFO* pAI)
 		if(buffPowerOp[0])
 		{
 			//Is it forced
-			TCHAR buffForced[256] = {0};
+			TCHAR buffAux[256] = {0};
 			if(!bAborting)
 			{
 				if(pAI->bForced)
 				{
-					::StringCchPrintf(buffForced, SIZEOF(buffForced), L" (%s)", LOC_STRING(IDS_STRING107));		//L"forced"
+					::StringCchPrintf(buff, SIZEOF(buff), L" (%s)", LOC_STRING(IDS_STRING107));		//L"forced"
+					::StringCchCat(buffAux, SIZEOF(buffAux), buff);
 				}
 
 				if(pAI->bUseARSO)
 				{
-					::StringCchPrintf(buffForced, SIZEOF(buffForced), L" (%s)", LOC_STRING(IDS_STRING120));		//L"use ARSO"
+					::StringCchPrintf(buff, SIZEOF(buff), L" (%s)", LOC_STRING(IDS_STRING120));		//L"use ARSO"
+					::StringCchCat(buffAux, SIZEOF(buffAux), buff);
+				}
+
+				if(pAI->rebootReq == RR_C_IF_REBOOT_REQUIRED)
+				{
+					::StringCchPrintf(buff, SIZEOF(buff), L" (%s)", LOC_STRING(IDS_STRING121));		//L"only if updates are ready"
+					::StringCchCat(buffAux, SIZEOF(buffAux), buff);
+				}
+				else if(pAI->rebootReq == RR_C_WAIT_FOR_REBOOT_REQUIRED)
+				{
+					::StringCchPrintf(buff, SIZEOF(buff), L" (%s)", LOC_STRING(IDS_STRING122));		//L"wait for updates to be ready"
+					::StringCchCat(buffAux, SIZEOF(buffAux), buff);
 				}
 			}
 
@@ -1332,36 +1555,50 @@ int CMain::ShowUserConfirmation(ACTIONS_INFO* pAI)
 				L"%s"
 				,
 				LOC_STRING(IDS_STRING113),		//Do you want to perform the following operation?
-				CapitalizeFirstLetter(buffPowerOp), buffForced,
+				CapitalizeFirstLetter(buffPowerOp), buffAux,
 				CapitalizeFirstLetter(LOC_STRING(IDS_STRING114)),		//Computer
 				buffComp,
 				buffTimeout,
 				buffUserMsg
 				);
 
+			LOC_STRING strTitle(IDS_STRING115);
+
 			//Show UI
 			::SetLastError(NO_ERROR);
-			int nResMB = ::MessageBox(NULL, buffMsg,
-				LOC_STRING(IDS_STRING115),
-				MB_YESNOCANCEL | MB_DEFBUTTON2 | MB_ICONQUESTION | MB_SYSTEMMODAL | MB_SETFOREGROUND);
 
-			if(nResMB == IDYES)
+			DWORD nResMB = 0;
+			if(::WTSSendMessage(WTS_CURRENT_SERVER_HANDLE, ::WTSGetActiveConsoleSessionId(),
+				strTitle, lstrlen(strTitle) * sizeof(WCHAR),
+				buffMsg, lstrlen(buffMsg) * sizeof(WCHAR),
+				MB_YESNOCANCEL | MB_DEFBUTTON2 | MB_ICONQUESTION | MB_SYSTEMMODAL | MB_SETFOREGROUND,
+				0,
+				&nResMB,
+				TRUE))
 			{
-				//User chose to continue
-				nRes = 1;
-			}
-			else if(nResMB == IDNO ||
-				nResMB == IDCANCEL)
-			{
-				//User chose not to continue
-				nRes = 0;
+				if(nResMB == IDYES)
+				{
+					//User chose to continue
+					nRes = 1;
+				}
+				else if(nResMB == IDNO ||
+					nResMB == IDCANCEL)
+				{
+					//User chose not to continue
+					nRes = 0;
+				}
+				else
+				{
+					//Error
+					nOSError = GetLastErrorNotNULL(ERROR_INVALID_LEVEL);
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(146, L"r=%d", nResMB);
+				}
 			}
 			else
 			{
 				//Error
-				nOSError = ::GetLastError();
-				if(nOSError == NO_ERROR)
-					nOSError = ERROR_INVALID_LEVEL;
+				nOSError = GetLastErrorNotNULL(ERROR_INVALID_LEVEL);
+				EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(147);
 			}
 		}
 		else
@@ -1609,7 +1846,7 @@ BOOL CMain::SetNeededShutdownPrivileges(LPCTSTR pStrRemoteCompName)
 	//		= TRUE if success
 	BOOL bRes = TRUE;
 
-	//Set SE_DEBUG_NAME privilege  
+	//Set shut-down privilege  
 	if(!AdjustPrivilege(NULL, L"SeShutdownPrivilege", TRUE))
 	{
 		//Error
@@ -1744,8 +1981,8 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 					dwShutDownFlags = SHUTDOWN_RESTART;
 					dwShutDownFlags |= 0x400;		//Special flag for Windows 10
 
-					//Cannot install updates, but it can be forced
-					pAI->bNoUpdates = TRUE;
+					////Cannot install updates, but it can be forced
+					//pAI->bNoUpdates = TRUE;
 				}
 				break;
 
@@ -1764,12 +2001,16 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 					{
 						//Success
 						nResOSErrCode = NO_ERROR;
+						EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[126] Power op aborted. Computer=\"%s\"", nLnRemoteCompName > 0 ? pStrRemoteCompName : L"");
+
 						_tprintf(L"Success aborting power operation...\n");
 					}
 					else
 					{
 						//Failed
 						nResOSErrCode = ::GetLastError();
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(125, L"Computer=\"%s\"", nLnRemoteCompName > 0 ? pStrRemoteCompName : L"");
+
 						_tprintf(L"ERROR: Failed to abort power operation: (%d) %s\n", 
 							nResOSErrCode,
 							CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
@@ -1781,9 +2022,12 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 			default:
 				{
 					//Wrong flag
-					ASSERT(NULL);
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(127, L"v=%d", pAI->pwrAction);
+
 					nResOSErrCode = ERROR_INVALID_USER_BUFFER;
 					_tprintf(L"INTERNAL ERROR: Wrong action type=%d\n", pAI->pwrAction);
+
+					ASSERT(NULL);
 				}
 				break;
 			}
@@ -1791,198 +2035,308 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 
 			if(dwShutDownFlags != 0)
 			{
-				//Adjust computer name
-				LPTSTR pStrCompNm = nLnRemoteCompName > 0 ? pStrRemoteCompName : NULL;
+				BOOL bContinueWithPowerOp = TRUE;
+				DWORD dwV;
 
-				//See if we have first two leading slashes
-				if(nLnRemoteCompName > 2)
+				//Is it Windows 10?
+				BOOL bWindows10 = FALSE;
+
+				RTL_OSVERSIONINFOW osi = {};
+				if(GetWindowsVersion(&osi))
 				{
-					if(pStrCompNm[0] == '\\' ||
-						pStrCompNm[1] == '\\')
+					if(osi.dwMajorVersion >= 10)
 					{
-						//Skip slashes
-						pStrCompNm = pStrCompNm + 2;
+						bWindows10 = TRUE;
 					}
 				}
-
-				//Set needed privelge (it will post warnings internally)
-				SetNeededShutdownPrivileges(pStrCompNm);
-
-
-				//See what API do we need to use?
-				if(!pAI->bNoUpdates ||
-					(pAI->pwrAction != PWR_OP_SHUT_DOWN &&
-					pAI->pwrAction != PWR_OP_REBOOT)
-					)
+				else
 				{
-					BOOL bContinueWithPowerOp = TRUE;
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(128);
+					ASSERT(NULL);
+				}
 
-					//Installing updates?
-					if(!pAI->bNoUpdates)
+
+
+				//Do we need to wait until reboot-required is on, or just to check for it?
+				int nErrRR = CheckOrWaitForRebootRequired(pAI, bWindows10);
+				if(nErrRR != NO_ERROR)
+				{
+					//Can't continue
+					bContinueWithPowerOp = FALSE;
+					nResOSErrCode = nErrRR;
+				}
+
+
+
+				if(bContinueWithPowerOp)
+				{
+					//Adjust computer name
+					LPTSTR pStrCompNm = nLnRemoteCompName > 0 ? pStrRemoteCompName : NULL;
+
+					//See if we have first two leading slashes
+					if(nLnRemoteCompName > 2)
 					{
-						dwShutDownFlags |= SHUTDOWN_INSTALL_UPDATES;
-
-						//Is it Windows 10?
-						RTL_OSVERSIONINFOW osi = {};
-						NTSTATUS (WINAPI *pfnRtlGetVersion)(
-						  PRTL_OSVERSIONINFOW lpVersionInformation
-						  );
-						(FARPROC&)pfnRtlGetVersion =
-						  ::GetProcAddress(::GetModuleHandle(L"ntdll.dll"), "RtlGetVersion");
-
-						if(pfnRtlGetVersion &&
-							pfnRtlGetVersion(&osi) == 0)
+						if(pStrCompNm[0] == '\\' ||
+							pStrCompNm[1] == '\\')
 						{
-							if(osi.dwMajorVersion >= 10)
+							//Skip slashes
+							pStrCompNm = pStrCompNm + 2;
+						}
+					}
+
+					//Set needed privelge (it will post warnings internally)
+					SetNeededShutdownPrivileges(pStrCompNm);
+
+
+
+					//Do we have to prevent installation of updates?
+					if(pAI->bNoUpdates)
+					{
+						//Only for Windows 10
+						if(bWindows10)
+						{
+							//Set special registry keys needed for no-updates option
+
+							//For details read the following blog post:
+							//
+							//	https://dennisbabkin.com/blog/?t=how-to-enable-installation-of-updates-or-to-prevent-it-during-reboot-or-shutdown
+							//
+
+							//  HKLM\SOFTWARE\Microsoft\WindowsUpdate\CommitStatus  	DWORD: NoCommit=1
+							dwV = 1;
+							if(!WriteValueToSystemRegistry(HKEY_LOCAL_MACHINE, TRUE, 
+								L"SOFTWARE\\Microsoft\\WindowsUpdate\\CommitStatus", L"NoCommit", REG_DWORD, &dwV, sizeof(dwV)))
 							{
-								//Check if update is ready to be installed, and if so
-								//mark it to be installed during shut-down/reboot.
-								//This applies only for the installation of major OS updates,
-								//or as Microsoft calls them "flights".
-								//INFO: Researched along with RbMm
-								//		https://github.com/rbmm
-								DWORD dwV = 1;
-								REG_WRITE_RES rgWrtRz = WriteValueToSystemRegistryIfKeyExists(HKEY_LOCAL_MACHINE,
-									L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Orchestrator\\InstallAtShutdown",
-									NULL, REG_DWORD, &dwV, sizeof(dwV));
-								if(rgWrtRz == RWR_SUCCESS ||
-									rgWrtRz == RWR_NO_KEY)
+								//Failed
+								nResOSErrCode = GetLastErrorNotNULL();
+								EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(130, L"Failed to set CommitStatus=1");
+
+								//Do not proceed with the power operation as it will begin installing updates
+								bContinueWithPowerOp = FALSE;
+
+								ASSERT(NULL);
+							}
+
+							if(bContinueWithPowerOp)
+							{
+								//  HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\WindowsUpdate\Orchestrator\InstallAtShutdown		DWORD: (Default)=0
+								dwV = 0;
+								if(!WriteValueToSystemRegistry(HKEY_LOCAL_MACHINE, TRUE, 
+									L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Orchestrator\\InstallAtShutdown", NULL, REG_DWORD, &dwV, sizeof(dwV)))
 								{
-									//Success, can continue with the power operation
-									//NOTE that this key will be removed and later recreated during the boot ...
+									//Failed
+									nResOSErrCode = GetLastErrorNotNULL();
+									EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(129, L"Failed to set InstallAtShutdown=0");
+
+									//Do not proceed with the power operation as it will begin installing updates
+									bContinueWithPowerOp = FALSE;
+
+									ASSERT(NULL);
+								}
+							}
+
+							if(!bContinueWithPowerOp)
+							{
+								if(nResOSErrCode == ERROR_ACCESS_DENIED)
+								{
+									_tprintf(L"ERROR: Failed to prevent installation of updates. "
+										L"Make sure that this process is running as administrator.\n");
 								}
 								else
 								{
-									//Error
-									nResOSErrCode = ::GetLastError();
-									ASSERT(rgWrtRz == RWR_ERROR);
-
-									//Do not proceed with the power operation as update will not be installed!
-									bContinueWithPowerOp = FALSE;
-
-									if(nResOSErrCode == ERROR_ACCESS_DENIED)
-									{
-										_tprintf(L"ERROR: Failed to enable installation of updates. "
-											L"Make sure that this module is running with administrative permissions, or specify /nu option.\n");
-									}
-									else
-									{
-										//Some other error
-										_tprintf(L"ERROR: Failed to enable installation of updates: (%d) %s\n",
-											nResOSErrCode,
-											CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
-											);
-									}
+									//Some other error
+									_tprintf(L"ERROR: Failed to prevent installation of updates: (%d) %s\n",
+										nResOSErrCode,
+										CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
+										);
 								}
 							}
 						}
-						else
-							ASSERT(NULL);
-					}
-
-					//Forced?
-					if(pAI->bForced)
-					{
-						dwShutDownFlags |= SHUTDOWN_FORCE_SELF | SHUTDOWN_FORCE_OTHERS;
-					}
-
-					//ARSO?
-					if(pAI->bUseARSO)
-					{
-						dwShutDownFlags |= SHUTDOWN_ARSO;
 					}
 
 
 					if(bContinueWithPowerOp)
 					{
-#ifndef TEST_POWER_OP
-						//Now execute power op
-						::SetLastError(NO_ERROR);
-						nResOSErrCode = ::InitiateShutdown(
-							pStrCompNm,
-							nLnMessage > 0 ? pStrMessage : NULL,
-							pAI->nTimeoutSec, 
-							dwShutDownFlags,
-							pAI->dwReason);
-#else
-						//Simulate success
-						nResOSErrCode = 0;
-#endif
-					}
-				}
-				else
-				{
-					//Use different API
-					//INFO: We need to do this because InitiateShutdown() does not work on remote computers!
-
-					//Pick operation
-					BOOL bRebootAfter = -1;
-					if(pAI->pwrAction == PWR_OP_SHUT_DOWN)
-					{
-						bRebootAfter = FALSE;
-					}
-					else if(pAI->pwrAction == PWR_OP_REBOOT)
-					{
-						bRebootAfter = TRUE;
-					}
-					
-					if(bRebootAfter == TRUE ||
-						bRebootAfter == FALSE)
-					{
-#ifndef TEST_POWER_OP
-						//Initiate now
-						::SetLastError(NO_ERROR);
-						if(::InitiateSystemShutdownEx(
-							pStrCompNm,
-							nLnMessage > 0 ? pStrMessage : NULL,
-							pAI->nTimeoutSec,
-							pAI->bForced,
-							bRebootAfter,
-							pAI->dwReason))
+						//See what API do we need to use?
+						if(!pAI->bNoUpdates ||
+							(pAI->pwrAction != PWR_OP_SHUT_DOWN &&
+							pAI->pwrAction != PWR_OP_REBOOT)
+							)
 						{
-							//Success
-							nResOSErrCode = NO_ERROR;
+							//Installing updates?
+							if(!pAI->bNoUpdates)
+							{
+								dwShutDownFlags |= SHUTDOWN_INSTALL_UPDATES;
+
+								//Is it Windows 10?
+								if(bWindows10)
+								{
+									//For details read the following blog post:
+									//
+									//	https://dennisbabkin.com/blog/?t=how-to-enable-installation-of-updates-or-to-prevent-it-during-reboot-or-shutdown
+									//
+
+									//First need to delete NoCommit value, if it's still there
+									if(!DeleteValueAndEmptyKeyFromSystemRegistry(HKEY_LOCAL_MACHINE, TRUE, 
+										L"SOFTWARE\\Microsoft\\WindowsUpdate\\CommitStatus", L"NoCommit"))
+									{
+										//Failed
+										nResOSErrCode = GetLastErrorNotNULL();
+										EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(148, L"Failed to remove NoCommit");
+
+										goto lbl_fail_02;
+									}
+
+									//And set the key that should instruct to install updates
+									dwV = 1;
+									if(!WriteValueToSystemRegistry(HKEY_LOCAL_MACHINE, TRUE,
+										L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Orchestrator\\InstallAtShutdown",
+										NULL, REG_DWORD, &dwV, sizeof(dwV)))
+									{
+										//Error
+										nResOSErrCode = GetLastErrorNotNULL();
+										EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(131, L"Failed to set InstallAtShutdown=1");
+
+lbl_fail_02:
+										//Do not proceed with the power operation as update will not be installed!
+										bContinueWithPowerOp = FALSE;
+
+										if(nResOSErrCode == ERROR_ACCESS_DENIED)
+										{
+											_tprintf(L"ERROR: Failed to enable installation of updates. "
+												L"Make sure that this process is running as administrator.\n");
+										}
+										else
+										{
+											//Some other error
+											_tprintf(L"ERROR: Failed to enable installation of updates: (%d) %s\n",
+												nResOSErrCode,
+												CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
+												);
+										}
+									}
+								}
+							}
+
+							//Forced?
+							if(pAI->bForced)
+							{
+								dwShutDownFlags |= SHUTDOWN_FORCE_SELF | SHUTDOWN_FORCE_OTHERS;
+							}
+
+							//ARSO?
+							if(pAI->bUseARSO)
+							{
+								dwShutDownFlags |= SHUTDOWN_ARSO;
+							}
+
+
+							if(bContinueWithPowerOp)
+							{
+#ifndef TEST_POWER_OP
+								//Now execute power op
+								::SetLastError(NO_ERROR);
+								nResOSErrCode = ::InitiateShutdown(
+									pStrCompNm,
+									nLnMessage > 0 ? pStrMessage : NULL,
+									pAI->nTimeoutSec, 
+									dwShutDownFlags,
+									pAI->dwReason);
+#else
+								//Simulate success
+								nResOSErrCode = 0;
+#endif
+							}
 						}
 						else
 						{
-							//Failed
-							nResOSErrCode = ::GetLastError();
-						}
+							//Use different API
+							//INFO: We need to do this because InitiateShutdown() does not work on remote computers!
+
+							//Pick operation
+							BOOL bRebootAfter = -1;
+							if(pAI->pwrAction == PWR_OP_SHUT_DOWN)
+							{
+								bRebootAfter = FALSE;
+							}
+							else if(pAI->pwrAction == PWR_OP_REBOOT)
+							{
+								bRebootAfter = TRUE;
+							}
+							
+							if(bRebootAfter == TRUE ||
+								bRebootAfter == FALSE)
+							{
+#ifndef TEST_POWER_OP
+								//Initiate now
+								::SetLastError(NO_ERROR);
+								if(::InitiateSystemShutdownEx(
+									pStrCompNm,
+									nLnMessage > 0 ? pStrMessage : NULL,
+									pAI->nTimeoutSec,
+									pAI->bForced,
+									bRebootAfter,
+									pAI->dwReason))
+								{
+									//Success
+									nResOSErrCode = NO_ERROR;
+								}
+								else
+								{
+									//Failed
+									nResOSErrCode = GetLastErrorNotNULL();
+								}
 #else
-						//Simulate syccess
-						nResOSErrCode = 0;
+								//Simulate syccess
+								nResOSErrCode = 0;
 #endif
+							}
+							else
+							{
+								//Bad power op
+								nResOSErrCode = ERROR_INVALID_FUNCTION;
+							}
+						}
+					}
+
+
+					LPCTSTR pStrNoUpdates = pAI->bNoUpdates ? L" (no updates)" : L"";
+
+					//Check result
+					if(nResOSErrCode == NO_ERROR)
+					{
+						//Success
+						EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[132] Initiated %s%s", pStrPwrOpName, pStrNoUpdates);
+
+						_tprintf(L"Success initiating %s%s...\n", pStrPwrOpName, pStrNoUpdates);
 					}
 					else
 					{
-						//Bad power op
-						nResOSErrCode = ERROR_INVALID_FUNCTION;
+						//Failed
+						SetLastError(nResOSErrCode);
+						EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(133, L"Failed to initiate %s%s", pStrPwrOpName, pStrNoUpdates);
+
+						_tprintf(L"ERROR: Failed to initiate %s%s: (%d) %s\n",
+							pStrPwrOpName,
+							pStrNoUpdates,
+							nResOSErrCode,
+							CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
+							);
 					}
 				}
-
-				//Check result
-				if(nResOSErrCode == NO_ERROR)
-				{
-					//Success
-					_tprintf(L"Success initiating %s...\n", pStrPwrOpName);
-				}
-				else
-				{
-					//Failed
-					_tprintf(L"ERROR: Failed to initiate %s: (%d) %s\n",
-						pStrPwrOpName,
-						nResOSErrCode,
-						CMain::FormatErrorMessage(nResOSErrCode, buffErrMsg, SIZEOF(buffErrMsg))
-						);
-				}
 			}
-
 		}
 		else
+		{
+			EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(124, L"n=%d", nLnMessage);
 			nResOSErrCode = ERROR_OUTOFMEMORY;
+		}
 	}
 	else
+	{
+		EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(123, L"n=%d", nLnRemoteCompName);
 		nResOSErrCode = ERROR_OUTOFMEMORY;
+	}
 
 
 
@@ -2002,18 +2356,20 @@ int CMain::doActions(ACTIONS_INFO* pAI)
 	return nResOSErrCode;
 }
 
-REG_WRITE_RES CMain::WriteValueToSystemRegistryIfKeyExists(HKEY hIniKey, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz)
+BOOL CMain::WriteValueToSystemRegistry(HKEY hIniKey, BOOL bWOW64, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz)
 {
 	//Write value into the 'lpSubKey' key, into 'lpKeyValue' value
 	//'hIniKey' = Initial key. Can be also: HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, etc.
+	//'bWOW64' = TRUE if 'lpSubKey' is a redirected WOW64 key under x86 build
 	//'dwValueType' = Could be REG_SZ, REG_EXPAND_SZ, REG_MULTI_SZ, REG_DWORD
 	//'pData' = data to write
 	//'ncbDataSz' = size of 'pData' in BYTEs
 	//RETURN:
 	//		= TRUE if done
+	//		= FALSE if error (check GetLastError() for info)
 	HKEY hKey;
 	DWORD dwR;
-	REG_WRITE_RES res = RWR_ERROR;
+	BOOL bRes = FALSE;
 	REGSAM dwSam;
 
 #ifdef _M_X64
@@ -2021,35 +2377,121 @@ REG_WRITE_RES CMain::WriteValueToSystemRegistryIfKeyExists(HKEY hIniKey, LPCTSTR
 	dwSam = KEY_SET_VALUE;
 #else
 	//32-bit
-	dwSam = KEY_SET_VALUE | KEY_WOW64_64KEY;
+	dwSam = KEY_SET_VALUE | (bWOW64 ? KEY_WOW64_64KEY : 0);
 #endif
 
-	dwR = RegOpenKeyEx(hIniKey, lpSubKey, 0, dwSam, &hKey);
+	dwR = RegCreateKeyEx(hIniKey, lpSubKey, NULL, NULL, 0, dwSam, NULL, &hKey, NULL);
 	if(dwR == ERROR_SUCCESS)
 	{
 		//Set value
 		if((dwR = RegSetValueEx(hKey, lpKeyValue, NULL, dwValueType, (const BYTE *)pData, ncbDataSz)) == ERROR_SUCCESS)
 		{
 			//Done
-			res = RWR_SUCCESS;
+			bRes = TRUE;
 		}
 
 		//Close key
 		RegCloseKey(hKey);
 	}
-	else if(dwR == ERROR_FILE_NOT_FOUND ||
-		dwR == ERROR_PATH_NOT_FOUND)
-	{
-		//Key doesn't exist
-		res = RWR_NO_KEY;
-	}
 
 	//Set last error
 	::SetLastError(dwR);
-
-	return res;
+	return bRes;
 }
 
+
+BOOL CMain::DeleteValueAndEmptyKeyFromSystemRegistry(HKEY hIniKey, BOOL bWOW64, LPCTSTR lpSubKey, LPCTSTR lpKeyValue)
+{
+	//Delete 'lpSubKey' value from the 'lpKeyValue' and then 'lpSubKey' itself if its empty
+	//'hIniKey' = Initial key. Can be also: HKEY_LOCAL_MACHINE, HKEY_CURRENT_USER, etc.
+	//'bWOW64' = TRUE if 'lpSubKey' is a redirected WOW64 key under x86 build
+	//RETURN:
+	//		= TRUE if done
+	//		= FALSE if error (check GetLastError() for info)
+	HKEY hKey;
+	DWORD dwR;
+	BOOL bRes = FALSE;
+	REGSAM dwSam;
+
+#ifdef _M_X64
+	//64-bit
+	dwSam = KEY_SET_VALUE | KEY_QUERY_VALUE;
+#else
+	//32-bit
+	dwSam = KEY_SET_VALUE | KEY_QUERY_VALUE | (bWOW64 ? KEY_WOW64_64KEY : 0);
+#endif
+
+	//Open such key first
+	dwR = RegOpenKeyEx(hIniKey, lpSubKey, 0, dwSam, &hKey);
+	if(dwR == ERROR_SUCCESS)
+	{
+		//Delete our value
+		dwR = RegDeleteValue(hKey, lpKeyValue);
+		if(dwR == ERROR_SUCCESS ||
+			dwR == ERROR_FILE_NOT_FOUND)
+		{
+			//Success so far
+			bRes = TRUE;
+		}
+
+		BOOL bCanDeleteKey = FALSE;
+
+		//See if there are any values or subkeys left in that key
+		DWORD dwCntSubkeys, dwCntVals;
+		DWORD dwR2 = RegQueryInfoKey(hKey, NULL, NULL, NULL, &dwCntSubkeys, NULL, NULL, &dwCntVals, NULL, NULL, NULL, NULL);
+		if(dwR2 == ERROR_SUCCESS)
+		{
+			//Can delete this key only if it has no values and no subkeys
+			if(dwCntVals == 0 &&
+				dwCntSubkeys == 0)
+			{
+				bCanDeleteKey = TRUE;
+			}
+		}
+		else
+		{
+			//Error
+			if(bRes)
+			{
+				dwR = dwR2;
+				bRes = FALSE;
+			}
+		}
+
+		//Close key
+		RegCloseKey(hKey);
+
+		if(bCanDeleteKey)
+		{
+			//Can delete this subkey now
+			dwR2 = RegDeleteKeyEx(hIniKey, lpSubKey, 
+#ifdef _M_X64
+				//64-bit
+				0,
+#else
+				//32-bit
+				(bWOW64 ? KEY_WOW64_64KEY : 0),
+#endif
+				NULL);
+
+			if(dwR2 != ERROR_SUCCESS)
+			{
+				//Error
+				dwR = dwR2;
+				bRes = FALSE;
+				ASSERT(NULL);
+			}
+		}
+	}
+	else if(dwR == ERROR_FILE_NOT_FOUND)
+	{
+		//No such key - then success, as there's nothing to delete
+		bRes = TRUE;
+	}
+
+	::SetLastError(dwR);
+	return bRes;
+}
 
 
 void CMain::outputMainLogo()
@@ -2134,7 +2576,195 @@ TCHAR* CMain::FormatDateTime(FILETIME* pFtUtc, TCHAR* pBuff, int nchLnBuff, BOOL
 }
 
 
+RES_YES_NO_ERR CMain::IsRebootRequired()
+{
+	//Check if reboot is now required to finish installing updates
+	//RETURN:
+	//		RYNE_YES	= if reboot is required to install updates
+	//		RYNE_NO		= if reboot is not required
+	//		RYNE_ERROR	= if error determining (check GetLastError() for info)
+	RES_YES_NO_ERR res = RYNE_ERROR;
+
+	//For details read the following blog post:
+	//
+	//	https://dennisbabkin.com/blog/?t=how-to-enable-installation-of-updates-or-to-prevent-it-during-reboot-or-shutdown
+	//
+
+	HKEY hKey;
+	DWORD dwR = RegOpenKeyEx(HKEY_LOCAL_MACHINE, 
+		L"SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\WindowsUpdate\\Orchestrator\\RebootRequired", 0, 
+#ifdef _M_X64
+		//64-bit
+		KEY_READ,
+#else
+		//32-bit
+		KEY_READ | KEY_WOW64_64KEY,
+#endif
+		&hKey);
+
+	if (dwR == ERROR_SUCCESS)
+	{
+		//Yes it is
+		res = RYNE_YES;
+
+		RegCloseKey(hKey);
+	}
+	else if(dwR == ERROR_FILE_NOT_FOUND)
+	{
+		//No such key
+		res = RYNE_NO;
+	}
+	else
+	{
+		//Error
+		::SetLastError(dwR);
+	}
+
+	return res;
+}
 
 
+
+BOOL CMain::GetWindowsVersion(RTL_OSVERSIONINFOW* pOutInfo)
+{
+	//Retrieve "Actual" version of the OS
+	//'pOutInfo' = if not NULL, receives version info
+	//RETURN:
+	//		= TRUE if received result
+	//		= FALSE if error (check GetLastError() for results)
+	BOOL bRes = FALSE;
+
+	RTL_OSVERSIONINFOW osi = {};
+
+	static HMODULE hMod = NULL;
+	if(!hMod)
+	{
+		hMod = GetModuleHandle(L"ntdll.dll");
+		ASSERT(hMod);
+	}
+
+	static NTSTATUS (WINAPI *pfnRtlGetVersion)(
+	  PRTL_OSVERSIONINFOW lpVersionInformation
+	  ) = NULL;
+
+	if(!pfnRtlGetVersion)
+	{
+		(FARPROC&)pfnRtlGetVersion = GetProcAddress(hMod, "RtlGetVersion");
+		ASSERT(pfnRtlGetVersion);
+	}
+
+	if(pfnRtlGetVersion)
+	{
+		NTSTATUS status = pfnRtlGetVersion(&osi);
+		if(status == 0)
+		{
+			bRes = TRUE;
+		}
+		else
+			SetLastError((int)status);
+	}
+	else
+		SetLastError(ERROR_INVALID_FUNCTION);
+
+	if(pOutInfo)
+		*pOutInfo = osi;
+
+	return bRes;
+}
+
+int CMain::GetLastErrorNotNULL(int nFallbackErrorCode)
+{
+	//RETURN:
+	//		= Last error code from GetLastError() if it's not 0, or
+	//		= nFallbackErrorCode value
+	int nErr = ::GetLastError();
+	return nErr != 0 ? nErr : nFallbackErrorCode;
+}
+
+
+int CMain::CheckOrWaitForRebootRequired(ACTIONS_INFO* pAI, BOOL bWin10)
+{
+	//Wait or check for reboot-required status
+	//'pAI' = parameters from command line call
+	//'bWin10' = TRUE if running on Windows 10
+	//RETURN:
+	//		= 0 if no errors (can continue)
+	//		= Other - need to quot
+	ASSERT(pAI);
+	int nResOSErrCode = NO_ERROR;
+
+	//Do we need to wait until reboot-required is on, or just to check for it
+	if(pAI->rebootReq == RR_C_WAIT_FOR_REBOOT_REQUIRED ||
+		pAI->rebootReq == RR_C_IF_REBOOT_REQUIRED)
+	{
+		if(bWin10)
+		{
+			DWORD dwmsIniTicks = ::GetTickCount();
+
+			if(pAI->rebootReq == RR_C_WAIT_FOR_REBOOT_REQUIRED)
+			{
+				EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[143] Started update-reboot wait");
+				_tprintf(L"Beginning to wait for update-reboot status ...\n");
+			}
+
+			//Go into a waiting loop
+			for(;; ::Sleep(500))
+			{
+				//Check if reboot is required
+				RES_YES_NO_ERR resRR = CMain::IsRebootRequired();
+
+				if(resRR == RYNE_YES)
+				{
+					//Reboot is required now
+					if(pAI->rebootReq == RR_C_WAIT_FOR_REBOOT_REQUIRED)
+					{
+						EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[141] Update-reboot is now enabled, elapsed %.1f sec", (::GetTickCount() - dwmsIniTicks) / 1000.0);
+					}
+					else
+					{
+						EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[144] Update-reboot is enabled");
+					}
+
+					_tprintf(L"Update-reboot status is enabled\n");
+
+					break;
+				}
+				else if(resRR == RYNE_NO)
+				{
+					//Not enabled yes
+					if(pAI->rebootReq == RR_C_IF_REBOOT_REQUIRED)
+					{
+						//We're just checking here
+						EVENT_LOG_REPORTS::ReportEventLogMsgInfo_WithFormat(L"[142] Update-reboot is not enabled, aborting");
+
+						nResOSErrCode = ERROR_REQUEST_ABORTED;		//1235;
+						_tprintf(L"Update-reboot status is not enabled yet ... aborting\n");
+
+						break;
+					}
+				}
+				else
+				{
+					//Error
+					nResOSErrCode = GetLastErrorNotNULL();
+					EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(140, L"r=%d, rr=%d", resRR, pAI->rebootReq);
+					_tprintf(L"ERROR: (%d) Waiting for update-reboot status\n", nResOSErrCode);
+					ASSERT(NULL);
+
+					break;
+				}
+			}
+		}
+		else
+		{
+			//Wrong OS - shouldn't be here!
+			nResOSErrCode = ERROR_NOT_SUPPORTED;
+			EVENT_LOG_REPORTS::ReportEventLogMsgERROR_Spec_WithFormat(139, L"rr=%d", pAI->rebootReq);
+			ASSERT(NULL);
+		}
+	}
+
+	return nResOSErrCode;
+}
 
 

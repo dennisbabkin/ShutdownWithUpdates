@@ -3,7 +3,7 @@
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
  * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
- *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
+ *     https://dennisbabkin.com/shutdownwithupdates/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,13 @@ protected:
 	static TCHAR* FormatErrorMessage(int nOSError, TCHAR* pBuff, int nchLnBuff, BOOL bUseDescriptionForNoError = FALSE);
 	static BOOL SetNeededShutdownPrivileges(LPCTSTR pStrRemoteCompName);
 	static int doActions(ACTIONS_INFO* pAI);
-	static REG_WRITE_RES WriteValueToSystemRegistryIfKeyExists(HKEY hIniKey, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz);
+	static BOOL WriteValueToSystemRegistry(HKEY hIniKey, BOOL bWOW64, LPCTSTR lpSubKey, LPCTSTR lpKeyValue, DWORD dwValueType, const void* pData, int ncbDataSz);
+	static BOOL DeleteValueAndEmptyKeyFromSystemRegistry(HKEY hIniKey, BOOL bWOW64, LPCTSTR lpSubKey, LPCTSTR lpKeyValue);
 	static void outputMainLogo();
 	static TCHAR* FormatDateTime(FILETIME* pFtUtc, TCHAR* pBuff, int nchLnBuff, BOOL bConvertToLocal = TRUE);
+	static RES_YES_NO_ERR IsRebootRequired();
+	static BOOL GetWindowsVersion(RTL_OSVERSIONINFOW* pOutInfo = NULL);
+	static int GetLastErrorNotNULL(int nFallbackErrorCode = ERROR_GEN_FAILURE);
+	static int CheckOrWaitForRebootRequired(ACTIONS_INFO* pAI, BOOL bWin10);
 
 };

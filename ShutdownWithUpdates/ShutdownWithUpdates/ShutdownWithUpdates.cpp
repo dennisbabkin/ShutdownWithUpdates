@@ -3,7 +3,7 @@
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
  * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
- *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
+ *     https://dennisbabkin.com/shutdownwithupdates/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,6 @@ int _tmain(int argc, _TCHAR* argv[])
 	//			= 0 if success
 	//			= -1 if general exception in the process
 	//			= Other - OS Error code
-
 
 	return CMain::doWork(argc, argv);
 }

@@ -5,7 +5,7 @@
  * "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
  * Copyright (c) 2016-2020 www.dennisbabkin.com
  *
- *     https://dennisbabkin.com/utilities/#ShutdownWithUpdates
+ *     https://dennisbabkin.com/shutdownwithupdates/
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,9 @@ enum CMD_TYPE{
 	CTP_SHOW_MESSAGE,				//-c
 	CTP_REASON,						//-d
 	CTP_ARSO,						//-arso
+	CTP_IF_REBOOT_REQUIRED,			//-irr
+	CTP_CHECK_REBOOT_REQUIRED,		//-crr
+	CTP_WAIT_REBOOT_REQUIRED,		//-wrr
 };
 
 
@@ -79,6 +82,14 @@ enum POWER_OP{
 #define EWX_ARSO 0x04000000
 
 
+enum REBOOT_REQUIRED_CLAUSE{
+	RR_C_None,
+
+	RR_C_IF_REBOOT_REQUIRED,				//Perform power op only if reboot is required
+	RR_C_CHECK_REBOOT_REQUIRED,				//Checks if reboot is required and returns the result
+	RR_C_WAIT_FOR_REBOOT_REQUIRED,			//Waits until the reboot is required
+};
+
 
 
 struct ACTIONS_INFO{
@@ -88,6 +99,7 @@ struct ACTIONS_INFO{
 	BOOL bVerbose;
 	BOOL bNoUpdates;
 	BOOL bUseARSO;		//See https://docs.microsoft.com/en-us/windows-server/identity/ad-ds/manage/component-updates/winlogon-automatic-restart-sign-on--arso-
+	REBOOT_REQUIRED_CLAUSE rebootReq;
 
 	LPCTSTR pStrRemoteCompName;
 	int nTimeoutSec;
@@ -102,6 +114,7 @@ struct ACTIONS_INFO{
 		bVerbose = FALSE;
 		bNoUpdates = FALSE;
 		bUseARSO = FALSE;
+		rebootReq = RR_C_None;
 
 		pStrRemoteCompName = NULL;
 		nTimeoutSec = 0;
@@ -217,11 +230,14 @@ private:
 
 
 
-enum REG_WRITE_RES{
-	RWR_SUCCESS = 0,
-	RWR_ERROR = -1,			//Check GetLastError() for details
-	RWR_NO_KEY = 1,
+#ifndef RES_YES_NO_ERR
+enum RES_YES_NO_ERR {
+	RYNE_YES = 1,
+	RYNE_NO = 0,
+	RYNE_ERROR = -1,
 };
+#endif
+
 
 
 

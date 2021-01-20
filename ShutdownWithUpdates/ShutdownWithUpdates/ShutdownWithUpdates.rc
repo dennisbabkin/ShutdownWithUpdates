@@ -53,8 +53,8 @@ END
 //
 
 VS_VERSION_INFO VERSIONINFO
- FILEVERSION 1,2,2,0
- PRODUCTVERSION 1,2,2,0
+ FILEVERSION 1,2,4,0
+ PRODUCTVERSION 1,2,4,0
  FILEFLAGSMASK 0x17L
 #ifdef _DEBUG
  FILEFLAGS 0x1L
@@ -71,12 +71,12 @@ BEGIN
         BEGIN
             VALUE "CompanyName", "www.dennisbabkin.com"
             VALUE "FileDescription", "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
-            VALUE "FileVersion", "1.2.2.0"
+            VALUE "FileVersion", "1.2.4.0"
             VALUE "InternalName", "ShutdownWithUpdates.exe"
-            VALUE "LegalCopyright", "Copyright (c) 2016-2020 by dennisbabkin.com.  All rights reserved."
+            VALUE "LegalCopyright", "Copyright (c) 2016-2021 by dennisbabkin.com.  All rights reserved."
             VALUE "OriginalFilename", "ShutdownWithUpdates.exe"
             VALUE "ProductName", "Utility To Install Pre-Downloaded Windows Updates & Shutdown/Reboot"
-            VALUE "ProductVersion", "1.2.2.0"
+            VALUE "ProductVersion", "1.2.4.0"
         END
     END
     BLOCK "VarFileInfo"
@@ -117,6 +117,8 @@ BEGIN
     IDS_STRING118           "d"
     IDS_STRING119           "go to advanced boot options menu"
     IDS_STRING120           "use ARSO"
+    IDS_STRING121           "only if updates are ready"
+    IDS_STRING122           "wait for update-reboot status"
 END
 
 #endif    // English (U.S.) resources

@@ -21,6 +21,8 @@
 
 #include <new>
 
+#include <wtsapi32.h>
+#pragma comment(lib, "Wtsapi32.lib")
 
 #include "AltStreams.h"		//Needed for CheckForXP_SP2_FileBlockAndRemoveIt()
 #include "ntddstor.h"		//Needed for CheckForXP_SP2_FileBlockAndRemoveIt()
@@ -28,9 +30,14 @@
 #include "rtlVersion.h"
 
 
-#define PROG_VER L"1.2.2.0"		//Program version
+
+
+#define PROG_NAME L"ShutdownWithUpdates"		//Program name
+#define PROG_VER L"1.2.4.0"						//Program version
 
 //#define TEST_POWER_OP			//Uncomment this line to simulate power operations
+
+#include "event_log_reporter.h"
 
 
 #define SIZEOF(f) (sizeof(f)/sizeof(f[0]))
