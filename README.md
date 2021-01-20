@@ -17,12 +17,9 @@ Note that this project was not designed, nor was tested to be opened in the vers
 
 ### Description
 
-Utility that initiates installation of pre-downloaded updates on the Windows system & reboots,
-or shuts it down. Note that if Windows updates were not downloaded prior to calling this utility,
-the OS will simply perform the power operation.
+Command line utility that initiates installation of pre-downloaded updates on the Windows system & reboots, or shuts it down. This tool can also reboot (or shut down) your computer without installation of updates, or perform actions on condition of updates being ready for a restart. Optionally, this tool allows to specify a boot into advanced boot options menu in Windows 8/10.
 
-**Windows 10:** Updates will be installed during a reboot regardless of the options described below.
-            Some major updates may require user interaction to proceed.
+**Windows 10:** Note that if Windows updates were not downloaded prior to calling this utility, the OS will simply perform a power operation similar to the Microsoft's [shutdown tool](https://technet.microsoft.com/en-us/library/bb491003.aspx).
 
 **Additional:** Major updates, such as Windows Feature Updates, may require user interaction in despite
             of the options specified by this tool. Such requirement is stipulated by Microsoft and
@@ -32,48 +29,63 @@ the OS will simply perform the power operation.
 ### Basic Operation
 
 Usage:
-> ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu] [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy] [/arso]
+> ShutdownWithUpdates [/s | /r | /hs | /g | /a | /?] [/f] [/v] [/nu]
+        [/m \\computer] [/t x] [/c "msg"] [/d [p|u:]xx:yy] [/arso]
+        [/irr | /crr | /wrr]
 
--  `/s`    Install updates & shut down computer.
+ Windows 10: This process may require to run as administrator for some options.
+
+-  /s    Install updates & shut down computer.
          (Updates must be already downloaded on computer being shut down.)
--  `/r`    Install updates & reboot computer.
+-  /r    Install updates & reboot computer.
          (Updates must be already downloaded on computer being rebooted.)
--  `/hs`   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
+-  /hs   Install updates & initiate hybrid shut-down of computer. (Windows 8,10)
          (Updates must be already downloaded on computer being shut down.)
--  `/g`    Install updates & reboot computer & restart registered applications.
+-  /g    Install updates & reboot computer & restart registered applications.
          (Updates must be already downloaded on computer being rebooted.)
--  `/abo`  Go to advanced boot options menu. (Windows 8,10)
+-  /abo  Go to advanced boot options menu. (Windows 8,10)
          (Pre-Windows 10: Updates will not be installed.)
--  `/a`    Abort previous shut-down/rebooting.
+-  /a    Abort previous shut-down/rebooting.
          (Can be used only during previous time-out period.)
--  `/?`    Show command line help.
--  `/f`    Use forced action.
+-  /f    Use forced action.
          WARNING: May result in the loss of unsaved data on target computer!
--  `/arso` Enables "Winlogon automatic restart sign-on". (Windows 10)
-            [Check here](https://dennisbabkin.com/r/?to=arso) for more info.
--  `/v`    Show user confirmation before proceeding.
+-  /irr  Allow operations only if updates are installed and ready for reboot.
+         (Local Windows 10 only.)
+         (Will exit with error code 1235 if updates are not ready.)
+-  /crr  Only check if updates are installed and ready for reboot.
+         (Local Windows 10 only. Can't be used with other parameters.)
+         (Will exit with code 0 if updates are not ready, or 350 if they are.)
+-  /wrr  Wait for updates to be installed and ready for reboot before proceeding.
+         (Local Windows 10 only.)
+-  /arso Enables "Winlogon automatic restart sign-on". (Local Windows 10 only.)
+         INFO: https://dennisbabkin.com/r/?to=arso
+-  /v    Show user confirmation before proceeding.
          (Local computer only. It is shown before time-out is initiated.)
--  `/nu`   Not to install updates.
-         (Windows 10: This option is not supported.)
--  `/m \\computer`    Specify target/remote computer.
--  `/t x`  Set time-out before performing action to x seconds.
+-  /nu   Not to install updates.
+         (Local Windows 10 only. Must be running as administrator.)
+-  /m \\computer    Specify target/remote computer.
+-  /t x  Set time-out before performing action to x seconds.
          (Valid range is 0-315360000, or 10 yrs, with a default of 0.)
--  `/c "msg"`      Message to be displayed in the interactive shutdown dialog box.
+-  /c "msg"      Message to be displayed in the interactive shutdown dialog box.
                  (Maximum of 512 characters is allowed.)
--  `/d [p|u:]xx:yy`  Reason for shut-down or rebooting (used for logging):
-   -  `p` if action was planned.
-   -  `u` if action was user-defined.
-      (If neither `p` or `u` is used, assumes unplanned.)
-   -  `xx` = major reason number (less than 65536.)
-   -  `yy` = minor reason number (greater than 65536.)
-                        (Reason numbers can be decimal or hex if begin with `0x`)
-        For major and minor reason values check "[System Shutdown Reason Codes](https://dennisbabkin.com/r/?to=win32sdrc)".
+-  /d [p|u:]xx:yy  Reason for shut-down or rebooting (used for logging):
+                   p if action was planned.
+                   u if action was user-defined.
+                   (If neither p or u is used, assumes unplanned.)
+                   xx = major reason number (less than 65536.)
+                   yy = minor reason number (greater than 65536.)
+                        (Reason numbers can be decimal or hex if begin with 0x)
+        For major and minor reason values check "System Shutdown Reason Codes":
+         https://dennisbabkin.com/r/?to=win32sdrc
+
+-  /?    Show command line help.
 
 Exit Codes:
-- `0`      if success.
-- `-1`     if general failure in the module.
-- `Other`  if error, will contain "[System Error Code](https://dennisbabkin.com/r/?to=win32errs)".
-
+- 0      if success.
+- -1     if general failure in the module.
+- Other  if error, will contain "System Error Code". For details check:
+         https://dennisbabkin.com/r/?to=win32errs
+         
 -------------
 
 #### Examples:
