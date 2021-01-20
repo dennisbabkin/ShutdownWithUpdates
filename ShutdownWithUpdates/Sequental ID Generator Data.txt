@@ -1,0 +1,13 @@
+// Auto-geneated by SeqIDGen v.1.0.1
+//  https://dennisbabkin.com/seqidgen
+
+CURRENT_ID: 149
+HOTKEY_ON: 1
+HK_VK: 73
+HK_MD: 3
+PLAY_SOUND: 1
+SOUND_FILE: 
+ID_FORMAT: 0
+ID_PREFIX: 0x
+ID_SUFFIX: 
+ID_CAP: 0
